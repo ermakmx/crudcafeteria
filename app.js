@@ -13,6 +13,8 @@ app.use(bodyParser.json());
 var appRoutes = require('./routes/app');
 var usuarioRoutes = require('./routes/usuario');
 var loginRoutes = require('./routes/login');
+var categoriaRoutes = require('./routes/categoria');
+var productoRoutes = require('./routes/producto');
 
 
 
@@ -27,7 +29,10 @@ mongoose.connection.openUri('mongodb://localhost:27017/cafeteriadb', { useNewUrl
 
 
 app.use('/usuario', usuarioRoutes);
+app.use('/categoria', categoriaRoutes);
+app.use('/producto', productoRoutes);
 app.use('/login', loginRoutes);
+
 app.use('/', appRoutes);
 
 app.listen(5000, () => {

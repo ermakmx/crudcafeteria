@@ -1,14 +1,11 @@
 var express = require('express');
-var bcrypt = require('bcryptjs');
-var jwt = require('jsonwebtoken');
 var mdAut = require('../middlewares/autenticacion');
 
-
-
-// var SEED = require('../config/config').SEED;
 var app = express();
 
-var Usuario = require('../models/usuario');
+var Producto = require('../models/producto');
+
+//const usuario = require('../models/usuario');
 
 //Obtener
 app.get('/', function(req, res, next) {
@@ -17,26 +14,26 @@ app.get('/', function(req, res, next) {
     var desde = req.query.desde || 0;
     desde = Number(desde);
 
-
-    Usuario.find({}, 'nombre email img role')
+    Producto.find({})
         .skip(desde)
         .limit(5)
-        .exec((err, usuarios) => {
+        .populate('usuario', 'nombre email')
+        .populate('categoria')
+        .exec((err, productos) => {
             if (err) {
                 res.status(500).json({
                     ok: false,
-                    mensaje: 'Error al cargar usuarios',
+                    mensaje: 'Error al cargar productos',
                     errors: err
 
                 });
             }
 
-            Usuario.count({}, (err, conteo) => {
+            Producto.count({}, (err, conteo) => {
                 res.status(200).json({
                     ok: true,
-                    usuarios: usuarios,
-                    conteo: conteo
-
+                    productos: productos,
+                    total: conteo
                 });
 
             });
@@ -55,46 +52,48 @@ app.put('/:id', mdAut.verificarToken, (req, res) => {
 
     var id = req.params.id;
     var body = req.body;
-    Usuario.findById(id, (err, usuario) => {
+
+    Producto.findById(id, (err, producto) => {
 
         if (err) {
             res.status(500).json({
                 ok: false,
-                mensaje: 'Error al buscar usuarios',
+                mensaje: 'Error al buscar los productos',
                 errors: err
 
             });
         }
-        if (!usuario) {
+        if (!producto) {
             res.status(400).json({
                 ok: false,
-                mensaje: ' No existe el usuario',
+                mensaje: ' No existe el producto',
                 errors: {
-                    message: 'No existe el usuario con ese id'
+                    message: 'No existe el producto con ese id'
                 }
 
             });
         }
 
-        usuario.nombre = body.nombre;
-        usuario.email = body.email;
-        usuario.role = body.role;
+        producto.nombre = body.nombre;
+        producto.usuario = req.usuario._id;
+        producto.categoria = body.categoria;
+        producto.precioUni = body.precioUni;
 
 
-        usuario.save((err, usuarioRegistrado) => {
+        producto.save((err, productoRegistrado) => {
 
             if (err) {
                 res.status(400).json({
                     ok: false,
-                    mensaje: 'Error al actualizar usuario',
+                    mensaje: 'Error al actualizar producto',
                     errors: err
 
                 });
             }
-            usuarioRegistrado.password = 'o_o';
+
             res.status(200).json({
                 ok: true,
-                usuario: usuarioRegistrado
+                producto: productoRegistrado
 
 
             });
@@ -112,20 +111,19 @@ app.post('/', mdAut.verificarToken, (req, res) => {
 
     var body = req.body;
 
-    var usuario = Usuario({
+    var producto = Producto({
         nombre: body.nombre,
-        email: body.email,
-        password: bcrypt.hashSync(body.password, 10),
-        img: body.img,
-        role: body.role
+        usuario: req.usuario._id,
+        precioUni: body.precioUni,
+        categoria: body.categoria
     });
 
-    usuario.save((err, usuarioregistrado) => {
+    producto.save((err, productoRegistrado) => {
 
         if (err) {
             return res.status(400).json({
                 ok: false,
-                mensaje: 'error al registrar usuario',
+                mensaje: 'error al registrar producto',
                 errors: err
 
             });
@@ -135,7 +133,7 @@ app.post('/', mdAut.verificarToken, (req, res) => {
 
         res.status(201).json({
             ok: true,
-            usuario: usuarioregistrado
+            producto: productoRegistrado
 
 
         });
@@ -147,37 +145,36 @@ app.post('/', mdAut.verificarToken, (req, res) => {
 
 
 
-
 //borrar
 
 app.delete('/:id', mdAut.verificarToken, (req, res) => {
 
     var id = req.params.id;
 
-    Usuario.findByIdAndRemove(id, (err, usuarioEliminado) => {
+    Producto.findByIdAndRemove(id, (err, ProductoEliminado) => {
         if (err) {
             res.status(500).json({
                 ok: false,
-                mensaje: 'Error al borrar usuario',
+                mensaje: 'Error al borrar producto',
                 errors: err
 
             });
         }
-        if (!usuarioEliminado) {
+        if (!ProductoEliminado) {
             res.status(400).json({
                 ok: false,
-                mensaje: 'El usuario no se encontro',
+                mensaje: 'El producto no se encontro',
                 errors: {
-                    message: "El usuario con ese id no se encontro"
+                    message: "El producto con ese id no se encontro"
                 }
 
             });
         }
 
-        usuarioEliminado.password = 'o_o';
+
         res.status(200).json({
             ok: true,
-            usuario: usuarioEliminado
+            producto: ProductoEliminado
 
 
         });

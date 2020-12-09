@@ -49,7 +49,7 @@ app.post('/', (req, res) => {
         usuarioDB.password = 'o_o';
         //token
 
-        var token = jwt.sign({ usuario: usuarioDB }, SEED, { expiresIn: 300 });
+        var token = jwt.sign({ usuario: usuarioDB }, SEED, { expiresIn: 14400 });
 
 
 
